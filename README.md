@@ -241,3 +241,14 @@ Sample Razor snippet for task detail:
 - Scaffold the solution using `dotnet new mvc` and apply the structure above.
 - Wire up DI registrations for services and executors.
 - Implement real ADF/SSIS integrations and add UI polish for dashboards and history views.
+
+## Build and test locally
+1. Install .NET 8 SDK.
+2. Restore, build, and test the full solution:
+   ```bash
+   dotnet restore DataPulse.sln
+   dotnet build DataPulse.sln -c Release
+   dotnet test DataPulse.sln -c Release
+   ```
+
+CI workflows (`.github/workflows/build.yml` and `.github/workflows/test.yml`) mirror these commands to validate every push and pull request.
