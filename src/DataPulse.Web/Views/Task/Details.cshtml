@@ -1,0 +1,28 @@
+@model DataPulse.Domain.Models.DataTask
+<h2>@Model.TaskName</h2>
+<p>@Model.Description</p>
+<form asp-action="RunTask" method="post">
+    <input type="hidden" name="id" value="@Model.TaskId" />
+    <button type="submit" class="btn btn-primary">Run Task</button>
+</form>
+<table class="table mt-3">
+    <thead><tr><th>Order</th><th>Name</th><th>Type</th><th>Status</th><th>Last Error</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var process in Model.Processes)
+    {
+        <tr>
+            <td>@process.ExecutionOrder</td>
+            <td>@process.ProcessName</td>
+            <td>@process.ProcessType</td>
+            <td>@process.Status</td>
+            <td>@process.LastErrorMessage</td>
+            <td>
+                <form asp-controller="Process" asp-action="Run" method="post">
+                    <input type="hidden" name="id" value="@process.ProcessId" />
+                    <button class="btn btn-secondary" type="submit">Run</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

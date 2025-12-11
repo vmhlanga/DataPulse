@@ -1,0 +1,18 @@
+@model IEnumerable<DataPulse.Domain.Models.DataTask>
+<h1>DataPulse Tasks</h1>
+<table class="table">
+    <thead>
+    <tr><th>Name</th><th>Status</th><th>Last Run</th><th></th></tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.TaskName</td>
+            <td>@item.Status</td>
+            <td>@item.LastRunEndTime?.ToString("u")</td>
+            <td><a asp-action="Details" asp-route-id="@item.TaskId">Open</a></td>
+        </tr>
+    }
+    </tbody>
+</table>
