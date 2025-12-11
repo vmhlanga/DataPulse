@@ -18,6 +18,7 @@ namespace DataPulse.Web.Controllers
         }
 
         [HttpGet("")]
+        [HttpGet("/")]
         public async Task<IActionResult> Index()
         {
             var tasks = await _taskService.GetRecentAsync();
