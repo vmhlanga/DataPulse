@@ -68,8 +68,8 @@ namespace DataPulse.Tests
             var process = await db.Processes.FirstAsync(p => p.ProcessId == 1);
 
             Assert.Equal(DomainTaskStatus.Success.ToString(), process.Status);
-            Assert.NotNull(process.LastRunStartTime);
-            Assert.NotNull(process.LastRunEndTime);
+            Assert.NotNull(process.StartTime);
+            Assert.NotNull(process.EndTime);
         }
 
         [Fact]
