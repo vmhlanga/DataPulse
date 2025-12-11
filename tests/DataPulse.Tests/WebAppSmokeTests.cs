@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using DataPulse.Application.Execution;
+using DataPulse.Domain.Enums;
 using DataPulse.Domain.Models;
 using DataPulse.Infrastructure.Data;
 using DataPulse.Web;
