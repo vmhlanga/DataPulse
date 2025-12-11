@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DataPulse.Application.Execution;
 using DataPulse.Application.Services;
-using DataPulse.Domain.Enums;
+using TaskStatus = DataPulse.Domain.Enums.TaskStatus;
 
 namespace DataPulse.Application.Orchestration
 {
