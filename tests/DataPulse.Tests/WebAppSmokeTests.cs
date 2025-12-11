@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Xunit;
+using DomainTaskStatus = DataPulse.Domain.Enums.TaskStatus;
 
 namespace DataPulse.Tests
 {
@@ -63,15 +64,17 @@ namespace DataPulse.Tests
             var db = scope.ServiceProvider.GetRequiredService<DataPulseDbContext>();
             var task = await db.Tasks.FirstAsync(t => t.TaskId == 1);
 
-            Assert.Equal(TaskStatus.Success, task.Status);
+            Assert.Equal(DomainTaskStatus.Success, task.Status);
             Assert.NotNull(task.LastRunStartTime);
             Assert.NotNull(task.LastRunEndTime);
-            Assert.True(db.Processes.All(p => p.Status == TaskStatus.Success.ToString()));
+            Assert.True(db.Processes.All(p => p.Status == DomainTaskStatus.Success.ToString()));
         }
     }
 
     public class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
+        private readonly string _databaseName = $"WebAppSmoke-{Guid.NewGuid()}";
+
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Development");
@@ -80,7 +83,7 @@ namespace DataPulse.Tests
                 services.RemoveAll(typeof(DbContextOptions<DataPulseDbContext>));
                 services.RemoveAll(typeof(IExecutionDispatcher));
 
-                services.AddDbContext<DataPulseDbContext>(options => options.UseInMemoryDatabase($"WebAppSmoke-{Guid.NewGuid()}").EnableSensitiveDataLogging());
+                services.AddDbContext<DataPulseDbContext>(options => options.UseInMemoryDatabase(_databaseName).EnableSensitiveDataLogging());
                 services.AddSingleton<IExecutionDispatcher, StubDispatcher>();
 
                 using var scope = services.BuildServiceProvider().CreateScope();
@@ -97,7 +100,7 @@ namespace DataPulse.Tests
                 TaskId = 1,
                 TaskName = "Smoke Task",
                 Description = "Seeded for integration tests",
-                Status = TaskStatus.NotStarted,
+                Status = DomainTaskStatus.NotStarted,
                 CreatedBy = "tests",
                 CreatedOn = DateTime.UtcNow
             };
@@ -110,7 +113,7 @@ namespace DataPulse.Tests
                 ProcessType = ProcessType.StoredProcedure,
                 ExecutionOrder = 1,
                 IsActive = true,
-                Status = TaskStatus.NotStarted.ToString()
+                Status = DomainTaskStatus.NotStarted.ToString()
             };
 
             task.Processes.Add(process);
