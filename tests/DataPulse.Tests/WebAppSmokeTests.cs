@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using DataPulse.Application.Execution;
-using DataPulse.Domain.Enums;
 using DataPulse.Domain.Models;
 using DataPulse.Infrastructure.Data;
 using DataPulse.Web;
@@ -14,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Xunit;
+using DomainTaskStatus = DataPulse.Domain.Enums.TaskStatus;
 
 namespace DataPulse.Tests
 {
@@ -63,10 +63,10 @@ namespace DataPulse.Tests
             var db = scope.ServiceProvider.GetRequiredService<DataPulseDbContext>();
             var task = await db.Tasks.FirstAsync(t => t.TaskId == 1);
 
-            Assert.Equal(TaskStatus.Success, task.Status);
+            Assert.Equal(DomainTaskStatus.Success, task.Status);
             Assert.NotNull(task.LastRunStartTime);
             Assert.NotNull(task.LastRunEndTime);
-            Assert.True(db.Processes.All(p => p.Status == TaskStatus.Success.ToString()));
+            Assert.True(db.Processes.All(p => p.Status == DomainTaskStatus.Success.ToString()));
         }
     }
 
@@ -97,7 +97,7 @@ namespace DataPulse.Tests
                 TaskId = 1,
                 TaskName = "Smoke Task",
                 Description = "Seeded for integration tests",
-                Status = TaskStatus.NotStarted,
+                Status = DomainTaskStatus.NotStarted,
                 CreatedBy = "tests",
                 CreatedOn = DateTime.UtcNow
             };
@@ -110,7 +110,7 @@ namespace DataPulse.Tests
                 ProcessType = ProcessType.StoredProcedure,
                 ExecutionOrder = 1,
                 IsActive = true,
-                Status = TaskStatus.NotStarted.ToString()
+                Status = DomainTaskStatus.NotStarted.ToString()
             };
 
             task.Processes.Add(process);
