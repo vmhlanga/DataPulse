@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using DataPulse.Application.Execution;
 using DataPulse.Domain.Enums;
 using DataPulse.Domain.Models;
 using DataPulse.Infrastructure.Data;
 using DataPulse.Web;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +57,47 @@ namespace DataPulse.Tests
         }
 
         [Fact]
+        public async Task Process_Run_Should_Record_Status_And_Timestamps()
+        {
+            var response = await _client.PostAsync("/processes/1/run", new FormUrlEncodedContent(Array.Empty<KeyValuePair<string, string>>()));
+
+            response.EnsureSuccessStatusCode();
+
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<DataPulseDbContext>();
+            var process = await db.Processes.FirstAsync(p => p.ProcessId == 1);
+
+            Assert.Equal(DomainTaskStatus.Success.ToString(), process.Status);
+            Assert.NotNull(process.LastRunStartTime);
+            Assert.NotNull(process.LastRunEndTime);
+        }
+
+        [Fact]
+        public async Task Navigation_Should_Reach_All_User_Facing_Pages()
+        {
+            var indexResponse = await _client.GetAsync("/tasks");
+            indexResponse.EnsureSuccessStatusCode();
+            var indexContent = await indexResponse.Content.ReadAsStringAsync();
+            Assert.Contains("DataPulse Tasks", indexContent);
+
+            var detailsResponse = await _client.GetAsync("/tasks/1");
+            detailsResponse.EnsureSuccessStatusCode();
+            var detailsContent = await detailsResponse.Content.ReadAsStringAsync();
+            Assert.Contains("Seeded step", detailsContent);
+
+            var processRunResponse = await _client.PostAsync("/processes/1/run", new FormUrlEncodedContent(Array.Empty<KeyValuePair<string, string>>()));
+            processRunResponse.EnsureSuccessStatusCode();
+            var afterRunContent = await processRunResponse.Content.ReadAsStringAsync();
+            Assert.Contains("Smoke Task", afterRunContent);
+
+            var adminResponse = await _client.GetAsync("/admin/tasks");
+            adminResponse.EnsureSuccessStatusCode();
+            var adminContent = await adminResponse.Content.ReadAsStringAsync();
+            Assert.Contains("Admin: Tasks", adminContent);
+            Assert.Contains("Smoke Task", adminContent);
+        }
+
+        [Fact]
         public async Task RunTask_Should_Update_Status_To_Success()
         {
             var response = await _client.PostAsync("/tasks/1/run", new FormUrlEncodedContent(Array.Empty<KeyValuePair<string, string>>()));
@@ -85,6 +128,7 @@ namespace DataPulse.Tests
 
                 services.AddDbContext<DataPulseDbContext>(options => options.UseInMemoryDatabase(_databaseName).EnableSensitiveDataLogging());
                 services.AddSingleton<IExecutionDispatcher, StubDispatcher>();
+                services.AddSingleton<IStartupFilter, FakeAdminUserStartupFilter>();
 
                 using var scope = services.BuildServiceProvider().CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<DataPulseDbContext>();
@@ -127,6 +171,29 @@ namespace DataPulse.Tests
             public Task<ExecutionResult> ExecuteAsync(Process process, string? runBy)
             {
                 return Task.FromResult(ExecutionResult.Completed("OK", DateTime.UtcNow));
+            }
+        }
+
+        private class FakeAdminUserStartupFilter : IStartupFilter
+        {
+            public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+            {
+                return app =>
+                {
+                    app.Use(async (context, pipeline) =>
+                    {
+                        var claims = new[]
+                        {
+                            new Claim(ClaimTypes.Name, "integration-admin"),
+                            new Claim(ClaimTypes.Role, "Admin"),
+                        };
+
+                        context.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuthType"));
+                        await pipeline();
+                    });
+
+                    next(app);
+                };
             }
         }
     }
