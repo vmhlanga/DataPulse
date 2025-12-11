@@ -9,4 +9,7 @@
     <ProjectReference Include="../DataPulse.Infrastructure/DataPulse.Infrastructure.csproj" />
     <ProjectReference Include="../DataPulse.Domain/DataPulse.Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.8" />
+  </ItemGroup>
 </Project>
