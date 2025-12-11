@@ -38,3 +38,6 @@ app.MapControllerRoute(
     pattern: "{controller=Task}/{action=Index}/{id?}");
 
 app.Run();
+
+// Expose Program class for integration testing
+public partial class Program { }
