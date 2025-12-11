@@ -11,6 +11,17 @@ namespace DataPulse.Application.Execution
         public DateTime EndedAt { get; init; }
         public TimeSpan Duration => EndedAt - StartedAt;
 
+        public static ExecutionResult Completed(string? output, DateTime started)
+        {
+            return new ExecutionResult
+            {
+                Success = true,
+                Output = output,
+                StartedAt = started,
+                EndedAt = DateTime.UtcNow
+            };
+        }
+
         public static ExecutionResult Failed(string message, DateTime started)
         {
             return new ExecutionResult
