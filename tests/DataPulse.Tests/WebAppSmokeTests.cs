@@ -73,6 +73,8 @@ namespace DataPulse.Tests
 
     public class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
+        private readonly string _databaseName = $"WebAppSmoke-{Guid.NewGuid()}";
+
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Development");
@@ -81,7 +83,7 @@ namespace DataPulse.Tests
                 services.RemoveAll(typeof(DbContextOptions<DataPulseDbContext>));
                 services.RemoveAll(typeof(IExecutionDispatcher));
 
-                services.AddDbContext<DataPulseDbContext>(options => options.UseInMemoryDatabase($"WebAppSmoke-{Guid.NewGuid()}").EnableSensitiveDataLogging());
+                services.AddDbContext<DataPulseDbContext>(options => options.UseInMemoryDatabase(_databaseName).EnableSensitiveDataLogging());
                 services.AddSingleton<IExecutionDispatcher, StubDispatcher>();
 
                 using var scope = services.BuildServiceProvider().CreateScope();
