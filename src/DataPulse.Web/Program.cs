@@ -38,8 +38,3 @@ app.MapControllerRoute(
     pattern: "{controller=Task}/{action=Index}/{id?}");
 
 app.Run();
-
-public partial class Program
-{
-    // Exposed for WebApplicationFactory in integration tests
-}

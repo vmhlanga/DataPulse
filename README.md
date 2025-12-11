@@ -240,7 +240,6 @@ Sample Razor snippet for task detail:
 - Unit tests for orchestrator rules and dispatcher routing.
 - Integration tests using in-memory or test SQL databases for repository logic.
 - Simulated executors for SSIS/ADF to avoid external dependencies during tests.
-- UI smoke tests with `WebApplicationFactory` to verify MVC pages render and task runs update persisted status with the in-memory test store.
 
 ## Next steps
 - Scaffold the solution using `dotnet new mvc` and apply the structure above.
