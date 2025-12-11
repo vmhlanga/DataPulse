@@ -6,6 +6,7 @@ using DataPulse.Application.Execution;
 using DataPulse.Application.Orchestration;
 using DataPulse.Application.Services;
 using DataPulse.Domain.Enums;
+using TaskStatus = DataPulse.Domain.Enums.TaskStatus;
 using DataPulse.Domain.Models;
 using Xunit;
 
@@ -22,7 +23,7 @@ namespace DataPulse.Tests
                 new()
                 {
                     ProcessId = 1,
-                    TaskId = taskService.Task.TaskId,
+                    TaskId = taskService.CurrentTask.TaskId,
                     ProcessName = "Step A",
                     ExecutionOrder = 1,
                     ProcessType = ProcessType.StoredProcedure,
@@ -31,7 +32,7 @@ namespace DataPulse.Tests
                 new()
                 {
                     ProcessId = 2,
-                    TaskId = taskService.Task.TaskId,
+                    TaskId = taskService.CurrentTask.TaskId,
                     ProcessName = "Step B",
                     ExecutionOrder = 2,
                     ProcessType = ProcessType.StoredProcedure,
@@ -42,7 +43,7 @@ namespace DataPulse.Tests
             var dispatcher = new StubDispatcher(success: true);
             var orchestrator = new TaskOrchestrator(taskService, processService, dispatcher);
 
-            await orchestrator.OrchestrateTaskAsync(taskService.Task.TaskId, "tester");
+            await orchestrator.OrchestrateTaskAsync(taskService.CurrentTask.TaskId, "tester");
 
             Assert.Equal(TaskStatus.Success.ToString(), taskService.StatusHistory.Last());
             Assert.All(processService.ProcessStatuses.Values, status => Assert.Equal(TaskStatus.Success.ToString(), status));
@@ -59,7 +60,7 @@ namespace DataPulse.Tests
                 new()
                 {
                     ProcessId = 1,
-                    TaskId = taskService.Task.TaskId,
+                    TaskId = taskService.CurrentTask.TaskId,
                     ProcessName = "Step A",
                     ExecutionOrder = 1,
                     ProcessType = ProcessType.StoredProcedure,
@@ -68,7 +69,7 @@ namespace DataPulse.Tests
                 new()
                 {
                     ProcessId = 2,
-                    TaskId = taskService.Task.TaskId,
+                    TaskId = taskService.CurrentTask.TaskId,
                     ProcessName = "Step B",
                     ExecutionOrder = 2,
                     ProcessType = ProcessType.StoredProcedure,
@@ -79,7 +80,7 @@ namespace DataPulse.Tests
             var dispatcher = new StubDispatcher(success: false);
             var orchestrator = new TaskOrchestrator(taskService, processService, dispatcher);
 
-            await orchestrator.OrchestrateTaskAsync(taskService.Task.TaskId, "tester");
+            await orchestrator.OrchestrateTaskAsync(taskService.CurrentTask.TaskId, "tester");
 
             Assert.Equal(TaskStatus.Failed.ToString(), taskService.StatusHistory.Last());
             Assert.Equal(TaskStatus.Failed.ToString(), processService.ProcessStatuses[1]);
@@ -95,7 +96,7 @@ namespace DataPulse.Tests
                 new()
                 {
                     ProcessId = 1,
-                    TaskId = taskService.Task.TaskId,
+                    TaskId = taskService.CurrentTask.TaskId,
                     ProcessName = "Step A",
                     ExecutionOrder = 1,
                     ProcessType = ProcessType.StoredProcedure,
@@ -104,7 +105,7 @@ namespace DataPulse.Tests
                 new()
                 {
                     ProcessId = 2,
-                    TaskId = taskService.Task.TaskId,
+                    TaskId = taskService.CurrentTask.TaskId,
                     ProcessName = "Step B",
                     ExecutionOrder = 2,
                     ProcessType = ProcessType.StoredProcedure,
@@ -115,7 +116,7 @@ namespace DataPulse.Tests
             var dispatcher = new StubDispatcher(success: false);
             var orchestrator = new TaskOrchestrator(taskService, processService, dispatcher);
 
-            await orchestrator.OrchestrateTaskAsync(taskService.Task.TaskId, "tester", continueOnError: true);
+            await orchestrator.OrchestrateTaskAsync(taskService.CurrentTask.TaskId, "tester", continueOnError: true);
 
             Assert.Contains(TaskStatus.Success.ToString(), taskService.StatusHistory);
             Assert.Equal(TaskStatus.Failed.ToString(), processService.ProcessStatuses[1]);
@@ -124,7 +125,7 @@ namespace DataPulse.Tests
 
         private class InMemoryTaskService : ITaskService
         {
-            public DataTask Task { get; } = new()
+            public DataTask CurrentTask { get; } = new()
             {
                 TaskId = 42,
                 TaskName = "Sample",
@@ -142,26 +143,26 @@ namespace DataPulse.Tests
 
             public Task<DataTask?> GetAsync(int id)
             {
-                return Task.FromResult<DataTask?>(Task.TaskId == id ? Task : null);
+                return Task.FromResult<DataTask?>(CurrentTask.TaskId == id ? CurrentTask : null);
             }
 
             public Task<IReadOnlyCollection<DataTask>> GetRecentAsync(int take = 20)
             {
-                return Task.FromResult<IReadOnlyCollection<DataTask>>(new List<DataTask> { Task });
+                return Task.FromResult<IReadOnlyCollection<DataTask>>(new List<DataTask> { CurrentTask });
             }
 
             public Task RecordRunTimesAsync(int taskId, DateTime start, DateTime? end)
             {
-                Task.LastRunStartTime = start;
-                Task.LastRunEndTime = end;
+                CurrentTask.LastRunStartTime = start;
+                CurrentTask.LastRunEndTime = end;
                 return Task.CompletedTask;
             }
 
             public Task UpdateStatusAsync(int taskId, string status, string? user)
             {
-                Task.Status = Enum.TryParse<TaskStatus>(status, out var parsed) ? parsed : Task.Status;
+                CurrentTask.Status = Enum.TryParse<TaskStatus>(status, out var parsed) ? parsed : CurrentTask.Status;
                 StatusHistory.Add(status);
-                Task.LastRunBy = user;
+                CurrentTask.LastRunBy = user;
                 return Task.CompletedTask;
             }
         }

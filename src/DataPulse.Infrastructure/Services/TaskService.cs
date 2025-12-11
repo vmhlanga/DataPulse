@@ -6,6 +6,7 @@ using DataPulse.Application.Services;
 using DataPulse.Domain.Models;
 using DataPulse.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using TaskStatus = DataPulse.Domain.Enums.TaskStatus;
 
 namespace DataPulse.Infrastructure.Services
 {
@@ -43,7 +44,10 @@ namespace DataPulse.Infrastructure.Services
                 return;
             }
 
-            task.Status = status;
+            if (Enum.TryParse<TaskStatus>(status, out var parsed))
+            {
+                task.Status = parsed;
+            }
             task.LastRunBy = user;
             await _dbContext.SaveChangesAsync();
         }
