@@ -222,6 +222,10 @@ Sample Razor snippet for task detail:
 ## Configuration
 - `appsettings.json` keys: `ConnectionStrings:DataPulseDb`, `Execution:AllowParallel`, `Execution:ContinueOnError`, `SSIS` (catalog vs dtexec), `ADF` (tenant, clientId, secret, subscription, resourceGroup, factoryName).
 - Use `IOptions<ExecutionOptions>` for DI and validations.
+- Environment-specific connectivity:
+  - The Launch database with the legacy catalog tables (`process_master`, `step_master`, `agent_master`) lives on **sql03**.
+  - SSIS packages and most SQL Agent jobs reside on **sql02**. Ensure orchestrator hosts (and the pipelines) can reach both servers.
+  - Store secrets such as `SQL03_LAUNCH_CONNECTION` and `SQL02_SSIS_CONNECTION` as GitHub Actions or deployment environment secrets. See `docs/ops/environment.md` for deployment notes.
 
 ## Security and auditing
 - Integrate ASP.NET Core Identity or Entra ID for authentication.

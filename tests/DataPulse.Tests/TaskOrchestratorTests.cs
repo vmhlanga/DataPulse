@@ -86,6 +86,42 @@ namespace DataPulse.Tests
             Assert.False(processService.ProcessStatuses.ContainsKey(2), "Second step should not have executed after a failure.");
         }
 
+        [Fact]
+        public async Task OrchestrateTaskAsync_Should_Continue_On_Error_When_Requested()
+        {
+            var taskService = new InMemoryTaskService();
+            var processService = new InMemoryProcessService(new List<Process>
+            {
+                new()
+                {
+                    ProcessId = 1,
+                    TaskId = taskService.Task.TaskId,
+                    ProcessName = "Step A",
+                    ExecutionOrder = 1,
+                    ProcessType = ProcessType.StoredProcedure,
+                    IsActive = true
+                },
+                new()
+                {
+                    ProcessId = 2,
+                    TaskId = taskService.Task.TaskId,
+                    ProcessName = "Step B",
+                    ExecutionOrder = 2,
+                    ProcessType = ProcessType.StoredProcedure,
+                    IsActive = true
+                }
+            });
+
+            var dispatcher = new StubDispatcher(success: false);
+            var orchestrator = new TaskOrchestrator(taskService, processService, dispatcher);
+
+            await orchestrator.OrchestrateTaskAsync(taskService.Task.TaskId, "tester", continueOnError: true);
+
+            Assert.Contains(TaskStatus.Success.ToString(), taskService.StatusHistory);
+            Assert.Equal(TaskStatus.Failed.ToString(), processService.ProcessStatuses[1]);
+            Assert.Equal(TaskStatus.Failed.ToString(), processService.ProcessStatuses[2]);
+        }
+
         private class InMemoryTaskService : ITaskService
         {
             public DataTask Task { get; } = new()
