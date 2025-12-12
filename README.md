@@ -247,7 +247,7 @@ Sample Razor snippet for task detail:
 - Implement real ADF/SSIS integrations and add UI polish for dashboards and history views.
 
 ## Build and test locally
-1. Install .NET 8 SDK.
+1. Install .NET 10 SDK (or a compatible preview).
 2. Restore, build, and test the full solution:
    ```bash
    dotnet restore DataPulse.sln

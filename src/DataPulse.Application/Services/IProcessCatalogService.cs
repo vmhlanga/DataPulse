@@ -10,5 +10,8 @@ namespace DataPulse.Application.Services
         Task<ProcessMaster?> GetProcessAsync(int processId);
         Task<IReadOnlyCollection<StepMaster>> GetStepsAsync(int processId);
         Task<StepMaster?> GetStepAsync(int stepId);
+        Task<IReadOnlyCollection<AgentMaster>> GetAgentsAsync();
+        Task<AgentMaster> AddAgentAsync(string agentName);
+        Task<ProcessMaster> AddProcessAsync(ProcessCatalogCreateRequest request);
     }
 }
