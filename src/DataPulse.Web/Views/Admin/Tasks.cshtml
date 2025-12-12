@@ -1,14 +1,14 @@
-@model IEnumerable<DataPulse.Domain.Models.DataTask>
-<h1>Admin: Tasks</h1>
+@model IEnumerable<DataPulse.Domain.Models.ProcessMaster>
+<h1>Admin: Processes</h1>
 <table class="table">
-    <thead><tr><th>Name</th><th>Status</th><th>Processes</th></tr></thead>
+    <thead><tr><th>Name</th><th>Description</th><th>Steps</th></tr></thead>
     <tbody>
-    @foreach (var t in Model)
+    @foreach (var process in Model)
     {
         <tr>
-            <td>@t.TaskName</td>
-            <td>@t.Status</td>
-            <td>@t.Processes.Count</td>
+            <td>@process.ProcessName</td>
+            <td>@process.ProcessDescription</td>
+            <td>@process.Steps.Count</td>
         </tr>
     }
     </tbody>

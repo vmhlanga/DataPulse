@@ -1,27 +1,22 @@
-@model DataPulse.Domain.Models.DataTask
-<h2>@Model.TaskName</h2>
-<p>@Model.Description</p>
+@model DataPulse.Domain.Models.ProcessMaster
+<h2>@Model.ProcessName</h2>
+<p>@Model.ProcessDescription</p>
 <form asp-action="RunTask" method="post">
-    <input type="hidden" name="id" value="@Model.TaskId" />
-    <button type="submit" class="btn btn-primary">Run Task</button>
+    <input type="hidden" name="id" value="@Model.ProcessId" />
+    <button type="submit" class="btn btn-primary">Run Process</button>
 </form>
 <table class="table mt-3">
-    <thead><tr><th>Order</th><th>Name</th><th>Type</th><th>Status</th><th>Last Error</th><th></th></tr></thead>
+    <thead><tr><th>Step Id</th><th>Name</th><th>Server</th><th>Database</th><th>Stored Proc</th><th>SSIS Package</th></tr></thead>
     <tbody>
-    @foreach (var process in Model.Processes)
+    @foreach (var step in Model.Steps)
     {
         <tr>
-            <td>@process.ExecutionOrder</td>
-            <td>@process.ProcessName</td>
-            <td>@process.ProcessType</td>
-            <td>@process.Status</td>
-            <td>@process.LastErrorMessage</td>
-            <td>
-                <form asp-controller="Process" asp-action="Run" method="post">
-                    <input type="hidden" name="id" value="@process.ProcessId" />
-                    <button class="btn btn-secondary" type="submit">Run</button>
-                </form>
-            </td>
+            <td>@step.StepId</td>
+            <td>@step.StepName</td>
+            <td>@step.ServerName</td>
+            <td>@step.DatabaseName</td>
+            <td>@step.SpName</td>
+            <td>@step.SsisPackageName</td>
         </tr>
     }
     </tbody>

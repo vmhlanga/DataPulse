@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using DataPulse.Application.Execution;
-using DataPulse.Domain.Enums;
 using DataPulse.Domain.Models;
 using DataPulse.Infrastructure.Data;
 using DataPulse.Web;
@@ -41,8 +40,8 @@ namespace DataPulse.Tests
 
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
-            Assert.Contains("DataPulse Tasks", content);
-            Assert.Contains("Smoke Task", content);
+            Assert.Contains("Process Catalog", content);
+            Assert.Contains("Smoke Process", content);
         }
 
         [Fact]
@@ -52,24 +51,23 @@ namespace DataPulse.Tests
 
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
-            Assert.Contains("Smoke Task", content);
+            Assert.Contains("Smoke Process", content);
             Assert.Contains("Seeded step", content);
         }
 
         [Fact]
-        public async Task Process_Run_Should_Record_Status_And_Timestamps()
+        public async Task Process_Run_Should_Invoke_Dispatcher_For_Step()
         {
+            var dispatcher = (StubDispatcher)_factory.Services.GetRequiredService<IExecutionDispatcher>();
+            dispatcher.Reset();
+
             var response = await _client.PostAsync("/processes/1/run", new FormUrlEncodedContent(Array.Empty<KeyValuePair<string, string>>()));
 
             response.EnsureSuccessStatusCode();
 
-            using var scope = _factory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<DataPulseDbContext>();
-            var process = await db.Processes.FirstAsync(p => p.ProcessId == 1);
-
-            Assert.Equal(DomainTaskStatus.Success.ToString(), process.Status);
-            Assert.NotNull(process.StartTime);
-            Assert.NotNull(process.EndTime);
+            Assert.Equal(1, dispatcher.ExecutionCount);
+            Assert.Equal(1, dispatcher.LastStep?.StepId);
+            Assert.Equal(1, dispatcher.LastProcess?.ProcessId);
         }
 
         [Fact]
@@ -78,7 +76,7 @@ namespace DataPulse.Tests
             var indexResponse = await _client.GetAsync("/tasks");
             indexResponse.EnsureSuccessStatusCode();
             var indexContent = await indexResponse.Content.ReadAsStringAsync();
-            Assert.Contains("DataPulse Tasks", indexContent);
+            Assert.Contains("Process Catalog", indexContent);
 
             var detailsResponse = await _client.GetAsync("/tasks/1");
             detailsResponse.EnsureSuccessStatusCode();
@@ -88,29 +86,26 @@ namespace DataPulse.Tests
             var processRunResponse = await _client.PostAsync("/processes/1/run", new FormUrlEncodedContent(Array.Empty<KeyValuePair<string, string>>()));
             processRunResponse.EnsureSuccessStatusCode();
             var afterRunContent = await processRunResponse.Content.ReadAsStringAsync();
-            Assert.Contains("Smoke Task", afterRunContent);
+            Assert.Contains("Smoke Process", afterRunContent);
 
             var adminResponse = await _client.GetAsync("/admin/tasks");
             adminResponse.EnsureSuccessStatusCode();
             var adminContent = await adminResponse.Content.ReadAsStringAsync();
-            Assert.Contains("Admin: Tasks", adminContent);
-            Assert.Contains("Smoke Task", adminContent);
+            Assert.Contains("Admin: Processes", adminContent);
+            Assert.Contains("Smoke Process", adminContent);
         }
 
         [Fact]
-        public async Task RunTask_Should_Update_Status_To_Success()
+        public async Task RunTask_Should_Invoke_All_Steps()
         {
+            var dispatcher = (StubDispatcher)_factory.Services.GetRequiredService<IExecutionDispatcher>();
+            dispatcher.Reset();
+
             var response = await _client.PostAsync("/tasks/1/run", new FormUrlEncodedContent(Array.Empty<KeyValuePair<string, string>>()));
             response.EnsureSuccessStatusCode();
 
-            using var scope = _factory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<DataPulseDbContext>();
-            var task = await db.Tasks.FirstAsync(t => t.TaskId == 1);
-
-            Assert.Equal(DomainTaskStatus.Success, task.Status);
-            Assert.NotNull(task.LastRunStartTime);
-            Assert.NotNull(task.LastRunEndTime);
-            Assert.True(db.Processes.All(p => p.Status == DomainTaskStatus.Success.ToString()));
+            Assert.Equal(1, dispatcher.ExecutionCount);
+            Assert.Equal(1, dispatcher.LastStep?.StepId);
         }
     }
 
@@ -139,39 +134,30 @@ namespace DataPulse.Tests
 
         private static void Seed(DataPulseDbContext db)
         {
-            var task = new DataTask
-            {
-                TaskId = 1,
-                TaskName = "Smoke Task",
-                Description = "Seeded for integration tests",
-                Status = DomainTaskStatus.NotStarted,
-                CreatedBy = "tests",
-                CreatedOn = DateTime.UtcNow
-            };
-
-            var process = new Process
+            var process = new ProcessMaster
             {
                 ProcessId = 1,
-                TaskId = 1,
-                ProcessName = "Seeded step",
-                ProcessType = ProcessType.StoredProcedure,
-                ExecutionOrder = 1,
-                IsActive = true,
-                Status = DomainTaskStatus.NotStarted.ToString()
+                ProcessName = "Smoke Process",
+                ProcessDescription = "Seeded for integration tests",
+                CreateDate = DateTime.UtcNow
             };
 
-            task.Processes.Add(process);
-            db.Tasks.Add(task);
-            db.Processes.Add(process);
-            db.SaveChanges();
-        }
-
-        private class StubDispatcher : IExecutionDispatcher
-        {
-            public Task<ExecutionResult> ExecuteAsync(Process process, string? runBy)
+            var step = new StepMaster
             {
-                return Task.FromResult(ExecutionResult.Completed("OK", DateTime.UtcNow));
-            }
+                StepId = 1,
+                ProcessId = 1,
+                StepName = "Seeded step",
+                StepDescription = "Seeded catalog step",
+                ServerName = "ssis-server",
+                DatabaseName = "ssis-db",
+                SpName = "dbo.usp_run_me",
+                CreateDate = DateTime.UtcNow
+            };
+
+            process.Steps.Add(step);
+            db.ProcessCatalog.Add(process);
+            db.StepCatalog.Add(step);
+            db.SaveChanges();
         }
 
         private class FakeAdminUserStartupFilter : IStartupFilter
@@ -195,6 +181,29 @@ namespace DataPulse.Tests
                     next(app);
                 };
             }
+        }
+    }
+
+    public class StubDispatcher : IExecutionDispatcher
+    {
+        public int ExecutionCount { get; private set; }
+        public StepMaster? LastStep { get; private set; }
+        public ProcessMaster? LastProcess { get; private set; }
+
+        public void Reset()
+        {
+            ExecutionCount = 0;
+            LastStep = null;
+            LastProcess = null;
+        }
+
+        public Task<ExecutionResult> ExecuteAsync(StepMaster step, ProcessMaster process, string? runBy)
+        {
+            ExecutionCount++;
+            LastStep = step;
+            LastProcess = process;
+
+            return Task.FromResult(ExecutionResult.Completed("OK", DateTime.UtcNow));
         }
     }
 }

@@ -20,12 +20,18 @@ namespace DataPulse.Infrastructure.Execution.Executors
             _logger = logger;
         }
 
-        public async Task<ExecutionResult> ExecuteAsync(string storedProcedureName, IDictionary<string, object?> parameters)
+        public async Task<ExecutionResult> ExecuteAsync(string storedProcedureName, IDictionary<string, object?> parameters, string serverName, string databaseName)
         {
             var started = DateTime.UtcNow;
             try
             {
-                await using var connection = new SqlConnection(_connectionString);
+                var builder = new SqlConnectionStringBuilder(_connectionString)
+                {
+                    DataSource = serverName,
+                    InitialCatalog = databaseName
+                };
+
+                await using var connection = new SqlConnection(builder.ConnectionString);
                 await connection.OpenAsync();
 
                 await using var command = new SqlCommand(storedProcedureName, connection)
@@ -39,7 +45,12 @@ namespace DataPulse.Infrastructure.Execution.Executors
                 }
 
                 var rows = await command.ExecuteNonQueryAsync();
-                _logger.LogInformation("Executed stored procedure {StoredProcedure} affecting {Rows} rows", storedProcedureName, rows);
+                _logger.LogInformation(
+                    "Executed stored procedure {StoredProcedure} on {Server}/{Database} affecting {Rows} rows",
+                    storedProcedureName,
+                    serverName,
+                    databaseName,
+                    rows);
 
                 return new ExecutionResult
                 {

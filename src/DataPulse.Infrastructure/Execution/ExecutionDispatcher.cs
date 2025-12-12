@@ -24,18 +24,20 @@ namespace DataPulse.Infrastructure.Execution
             _adfExecutor = adfExecutor;
         }
 
-        public Task<ExecutionResult> ExecuteAsync(Process process, string? runBy)
+        public Task<ExecutionResult> ExecuteAsync(StepMaster step, ProcessMaster process, string? runBy)
         {
-            var parameters = string.IsNullOrWhiteSpace(process.ParametersJson)
+            var parameters = string.IsNullOrWhiteSpace(process.ProcessDescription)
                 ? new Dictionary<string, object?>()
-                : JsonSerializer.Deserialize<Dictionary<string, object?>>(process.ParametersJson) ?? new();
+                : JsonSerializer.Deserialize<Dictionary<string, object?>>(process.ProcessDescription) ?? new();
 
-            return process.ProcessType switch
+            var processType = (ProcessType)process.ProcessTypeId;
+
+            return processType switch
             {
-                ProcessType.SSIS => _ssisExecutor.ExecuteAsync(process.TargetIdentifier, parameters),
-                ProcessType.StoredProcedure => _storedProcedureExecutor.ExecuteAsync(process.TargetIdentifier, parameters),
-                ProcessType.ADFPipeline => _adfExecutor.ExecuteAsync(process.TargetIdentifier, parameters),
-                _ => Task.FromResult(ExecutionResult.Failed($"Unsupported process type {process.ProcessType}", System.DateTime.UtcNow))
+                ProcessType.SSIS => _ssisExecutor.ExecuteAsync(step.SsisPackageName, parameters, step.ServerName),
+                ProcessType.StoredProcedure => _storedProcedureExecutor.ExecuteAsync(step.SpName, parameters, step.ServerName, step.DatabaseName),
+                ProcessType.ADFPipeline => _adfExecutor.ExecuteAsync(process.ProcessName, parameters),
+                _ => Task.FromResult(ExecutionResult.Failed($"Unsupported process type {process.ProcessTypeId}", System.DateTime.UtcNow))
             };
         }
     }

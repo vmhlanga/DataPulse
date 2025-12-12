@@ -15,16 +15,20 @@ namespace DataPulse.Infrastructure.Execution.Executors
             _logger = logger;
         }
 
-        public Task<ExecutionResult> ExecuteAsync(string packageName, IDictionary<string, object?> parameters)
+        public Task<ExecutionResult> ExecuteAsync(string packageName, IDictionary<string, object?> parameters, string serverName)
         {
             var started = DateTime.UtcNow;
-            _logger.LogInformation("Starting SSIS package {Package} with params {Params}", packageName, parameters);
+            _logger.LogInformation(
+                "Starting SSIS package {Package} on {Server} with params {Params}",
+                packageName,
+                serverName,
+                parameters);
 
             // TODO: add real SSIS Catalog or SQL Agent/dtexec integration
             return Task.FromResult(new ExecutionResult
             {
                 Success = true,
-                Output = $"Simulated SSIS execution for {packageName}",
+                Output = $"Simulated SSIS execution for {packageName} on {serverName}",
                 StartedAt = started,
                 EndedAt = DateTime.UtcNow
             });
