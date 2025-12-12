@@ -148,8 +148,8 @@ namespace DataPulse.Tests
                 ProcessId = 1,
                 StepName = "Seeded step",
                 StepDescription = "Seeded catalog step",
-                ServerName = "ssis-server", 
-                DatabaseName = "ssis-db", 
+                ServerName = "ssis-server",
+                DatabaseName = "ssis-db",
                 SpName = "dbo.usp_run_me",
                 CreateDate = DateTime.UtcNow
             };
@@ -158,29 +158,6 @@ namespace DataPulse.Tests
             db.ProcessCatalog.Add(process);
             db.StepCatalog.Add(step);
             db.SaveChanges();
-        }
-
-        private class StubDispatcher : IExecutionDispatcher
-        {
-            public int ExecutionCount { get; private set; }
-            public StepMaster? LastStep { get; private set; }
-            public ProcessMaster? LastProcess { get; private set; }
-
-            public void Reset()
-            {
-                ExecutionCount = 0;
-                LastStep = null;
-                LastProcess = null;
-            }
-
-            public Task<ExecutionResult> ExecuteAsync(StepMaster step, ProcessMaster process, string? runBy)
-            {
-                ExecutionCount++;
-                LastStep = step;
-                LastProcess = process;
-
-                return Task.FromResult(ExecutionResult.Completed("OK", DateTime.UtcNow));
-            }
         }
 
         private class FakeAdminUserStartupFilter : IStartupFilter
@@ -204,6 +181,29 @@ namespace DataPulse.Tests
                     next(app);
                 };
             }
+        }
+    }
+
+    public class StubDispatcher : IExecutionDispatcher
+    {
+        public int ExecutionCount { get; private set; }
+        public StepMaster? LastStep { get; private set; }
+        public ProcessMaster? LastProcess { get; private set; }
+
+        public void Reset()
+        {
+            ExecutionCount = 0;
+            LastStep = null;
+            LastProcess = null;
+        }
+
+        public Task<ExecutionResult> ExecuteAsync(StepMaster step, ProcessMaster process, string? runBy)
+        {
+            ExecutionCount++;
+            LastStep = step;
+            LastProcess = process;
+
+            return Task.FromResult(ExecutionResult.Completed("OK", DateTime.UtcNow));
         }
     }
 }
