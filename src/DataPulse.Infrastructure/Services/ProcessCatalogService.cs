@@ -110,6 +110,8 @@ namespace DataPulse.Infrastructure.Services
                 CreateDate = System.DateTime.UtcNow
             };
 
+            var creationDate = process.CreateDate ?? System.DateTime.UtcNow;
+
             var step = new StepMaster
             {
                 StepId = nextStepId,
@@ -123,7 +125,7 @@ namespace DataPulse.Infrastructure.Services
                 ProcessId = process.ProcessId,
                 IsLastStep = 1,
                 DependentStepId = 0,
-                CreateDate = process.CreateDate,
+                CreateDate = creationDate,
                 ExecutePath = request.PrimaryStep.ExecutePath
             };
 
