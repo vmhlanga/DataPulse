@@ -23,6 +23,13 @@ builder.Services.AddScoped<IAdfPipelineExecutor, AdfPipelineExecutor>();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<DataPulseDbContext>();
+    dbContext.Database.EnsureCreated();
+    DataSeeder.Seed(dbContext);
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
