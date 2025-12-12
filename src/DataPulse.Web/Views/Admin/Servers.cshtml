@@ -1,0 +1,147 @@
+@model DataPulse.Web.Models.CatalogAdminViewModel
+
+<h1>Environment Configuration</h1>
+<p class="lead">Configure servers/agents and add catalog jobs directly from the seeded database.</p>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-light">Servers &amp; Agents</div>
+            <div class="card-body">
+                <form asp-action="AddServer" method="post" class="mb-3">
+                    <div class="mb-3">
+                        <label asp-for="NewAgent.AgentName" class="form-label"></label>
+                        <input asp-for="NewAgent.AgentName" class="form-control" placeholder="e.g. sql-west-ops" />
+                        <span asp-validation-for="NewAgent.AgentName" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Server</button>
+                </form>
+
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr><th>Name</th><th class="text-end">Created</th></tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var agent in Model.Agents)
+                    {
+                        <tr>
+                            <td>@agent.AgentMasterName</td>
+                            <td class="text-end">@agent.CreateDate?.ToString("u")</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-light">Add a Job from the Catalog</div>
+            <div class="card-body">
+                <form asp-action="AddJob" method="post">
+                    <div class="mb-3">
+                        <label asp-for="NewJob.ProcessName" class="form-label"></label>
+                        <input asp-for="NewJob.ProcessName" class="form-control" placeholder="Nightly Refresh" />
+                        <span asp-validation-for="NewJob.ProcessName" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="NewJob.ProcessDescription" class="form-label"></label>
+                        <textarea asp-for="NewJob.ProcessDescription" rows="2" class="form-control" placeholder="What the job does"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="NewJob.ProcessTypeId" class="form-label"></label>
+                            <select asp-for="NewJob.ProcessTypeId" class="form-select">
+                                <option value="1">SQL / Stored Procedure</option>
+                                <option value="2">Data Factory / Pipeline</option>
+                                <option value="3">SSIS Package</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="NewJob.AgentMasterId" class="form-label"></label>
+                            <select asp-for="NewJob.AgentMasterId" class="form-select">
+                                <option value="">Select server</option>
+                                @foreach (var agent in Model.Agents)
+                                {
+                                    <option value="@agent.AgentMasterId">@agent.AgentMasterName</option>
+                                }
+                            </select>
+                            <span asp-validation-for="NewJob.AgentMasterId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NewJob.StepName" class="form-label"></label>
+                        <input asp-for="NewJob.StepName" class="form-control" placeholder="Primary step" />
+                        <span asp-validation-for="NewJob.StepName" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="NewJob.StepDescription" class="form-label"></label>
+                        <textarea asp-for="NewJob.StepDescription" rows="2" class="form-control" placeholder="Step description"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="NewJob.ServerName" class="form-label"></label>
+                            <input asp-for="NewJob.ServerName" class="form-control" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="NewJob.DatabaseName" class="form-label"></label>
+                            <input asp-for="NewJob.DatabaseName" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="NewJob.SpName" class="form-label"></label>
+                            <input asp-for="NewJob.SpName" class="form-control" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="NewJob.ExecutePath" class="form-label"></label>
+                            <input asp-for="NewJob.ExecutePath" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="NewJob.SsisPackageName" class="form-label"></label>
+                            <input asp-for="NewJob.SsisPackageName" class="form-control" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="NewJob.SsisSolutionName" class="form-label"></label>
+                            <input asp-for="NewJob.SsisSolutionName" class="form-control" />
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">Add Job</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-light">Catalog Preview</div>
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr><th>Name</th><th>Type</th><th>Server</th><th>Steps</th></tr>
+            </thead>
+            <tbody>
+            @foreach (var process in Model.Processes)
+            {
+                var stepSummary = process.Steps?.Any() == true
+                    ? string.Join(" → ", process.Steps.OrderBy(s => s.StepId).Select(s => s.StepName))
+                    : "No steps configured";
+                <tr>
+                    <td>@process.ProcessName</td>
+                    <td>@process.ProcessTypeId</td>
+                    <td>@process.Agent?.AgentMasterName</td>
+                    <td>@stepSummary</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
