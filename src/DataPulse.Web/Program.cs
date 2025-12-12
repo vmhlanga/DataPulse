@@ -14,6 +14,7 @@ builder.Services.AddDbContext<DataPulseDbContext>(options => options.UseInMemory
 
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IProcessService, ProcessService>();
+builder.Services.AddScoped<IProcessCatalogService, ProcessCatalogService>();
 builder.Services.AddScoped<IExecutionDispatcher, ExecutionDispatcher>();
 builder.Services.AddScoped<TaskOrchestrator>();
 builder.Services.AddScoped<ISSISExecutor, SsisCatalogExecutor>();

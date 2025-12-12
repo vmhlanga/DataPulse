@@ -5,6 +5,6 @@ namespace DataPulse.Application.Execution
 {
     public interface IExecutionDispatcher
     {
-        Task<ExecutionResult> ExecuteAsync(Process process, string? runBy);
+        Task<ExecutionResult> ExecuteAsync(StepMaster step, ProcessMaster process, string? runBy);
     }
 }

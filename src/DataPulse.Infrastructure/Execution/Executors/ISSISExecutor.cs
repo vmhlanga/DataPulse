@@ -6,6 +6,6 @@ namespace DataPulse.Infrastructure.Execution.Executors
 {
     public interface ISSISExecutor
     {
-        Task<ExecutionResult> ExecuteAsync(string packageName, IDictionary<string, object?> parameters);
+        Task<ExecutionResult> ExecuteAsync(string packageName, IDictionary<string, object?> parameters, string serverName);
     }
 }

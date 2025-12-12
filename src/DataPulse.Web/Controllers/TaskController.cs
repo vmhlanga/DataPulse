@@ -8,12 +8,12 @@ namespace DataPulse.Web.Controllers
     [Route("tasks")]
     public class TaskController : Controller
     {
-        private readonly ITaskService _taskService;
         private readonly TaskOrchestrator _orchestrator;
+        private readonly IProcessCatalogService _processCatalogService;
 
-        public TaskController(ITaskService taskService, TaskOrchestrator orchestrator)
+        public TaskController(IProcessCatalogService processCatalogService, TaskOrchestrator orchestrator)
         {
-            _taskService = taskService;
+            _processCatalogService = processCatalogService;
             _orchestrator = orchestrator;
         }
 
@@ -21,20 +21,20 @@ namespace DataPulse.Web.Controllers
         [HttpGet("/")]
         public async Task<IActionResult> Index()
         {
-            var tasks = await _taskService.GetRecentAsync();
-            return View(tasks);
+            var processes = await _processCatalogService.GetProcessesAsync();
+            return View(processes);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Details(int id)
         {
-            var task = await _taskService.GetAsync(id);
-            if (task == null)
+            var process = await _processCatalogService.GetProcessAsync(id);
+            if (process == null)
             {
                 return NotFound();
             }
 
-            return View(task);
+            return View(process);
         }
 
         [HttpPost("{id}/run")]

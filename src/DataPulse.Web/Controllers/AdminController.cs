@@ -9,18 +9,18 @@ namespace DataPulse.Web.Controllers
     [Route("admin")]
     public class AdminController : Controller
     {
-        private readonly ITaskService _taskService;
+        private readonly IProcessCatalogService _processCatalogService;
 
-        public AdminController(ITaskService taskService)
+        public AdminController(IProcessCatalogService processCatalogService)
         {
-            _taskService = taskService;
+            _processCatalogService = processCatalogService;
         }
 
         [HttpGet("tasks")]
         public async Task<IActionResult> Tasks()
         {
-            var tasks = await _taskService.GetRecentAsync(200);
-            return View(tasks);
+            var processes = await _processCatalogService.GetProcessesAsync();
+            return View(processes);
         }
     }
 }
