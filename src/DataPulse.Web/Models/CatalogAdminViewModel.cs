@@ -39,9 +39,9 @@ namespace DataPulse.Web.Models
         [Display(Name = "Process Type Id")]
         public int ProcessTypeId { get; set; } = 1;
 
-        [Range(1, int.MaxValue)]
+        [Range(1, long.MaxValue)]
         [Display(Name = "Server/Agent")]
-        public int AgentMasterId { get; set; }
+        public long AgentMasterId { get; set; }
 
         [Required]
         [StringLength(1000)]

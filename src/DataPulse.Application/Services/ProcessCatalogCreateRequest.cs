@@ -12,8 +12,8 @@ namespace DataPulse.Application.Services
         [Range(1, int.MaxValue)]
         public int ProcessTypeId { get; set; }
 
-        [Range(1, int.MaxValue)]
-        public int AgentMasterId { get; set; }
+        [Range(1, long.MaxValue)]
+        public long AgentMasterId { get; set; }
 
         [Required]
         public StepCatalogCreateRequest PrimaryStep { get; set; } = new();
