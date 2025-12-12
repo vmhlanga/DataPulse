@@ -19,18 +19,32 @@ namespace DataPulse.Infrastructure.Services
 
         public async Task<IReadOnlyCollection<ProcessMaster>> GetProcessesAsync()
         {
-            return await _dbContext.ProcessCatalog
-                .Include(p => p.Steps.OrderBy(s => s.StepId))
+            var processes = await _dbContext.ProcessCatalog
+                .Include(p => p.Steps)
                 .AsNoTracking()
                 .ToListAsync();
+
+            foreach (var process in processes)
+            {
+                process.Steps = process.Steps.OrderBy(s => s.StepId).ToList();
+            }
+
+            return processes;
         }
 
         public async Task<ProcessMaster?> GetProcessAsync(int processId)
         {
-            return await _dbContext.ProcessCatalog
-                .Include(p => p.Steps.OrderBy(s => s.StepId))
+            var process = await _dbContext.ProcessCatalog
+                .Include(p => p.Steps)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.ProcessId == processId);
+
+            if (process != null)
+            {
+                process.Steps = process.Steps.OrderBy(s => s.StepId).ToList();
+            }
+
+            return process;
         }
 
         public async Task<IReadOnlyCollection<StepMaster>> GetStepsAsync(int processId)
